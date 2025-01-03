@@ -4,6 +4,7 @@
 import argparse, re, json, hashlib, requests
 from bs4 import BeautifulSoup
 from json import JSONEncoder
+from datetime import datetime
 
 class GameRecord(object):
 	"""docstring for GameRecord"""
@@ -125,13 +126,15 @@ def main():
 
 		scores = []
 		for content_id in content_ids:
-			scores.append(find_scores(soup, content_id, club_id))
-		result["scores"] = scores
+			scores.extend(find_scores(soup, content_id, club_id))
+		# print(scores)
+		result["scores"] = sorted(scores, key=lambda game: datetime.strptime(game.date, '%d.%m.%Y %H:%M'))
 
 
-		result["shedule"] = find_schedules(soup, club_id)
+		schedules = find_schedules(soup, club_id)
+		result["shedule"] = sorted(schedules, key=lambda game: datetime.strptime(game.date, '%d.%m.%Y %H:%M'))
 
-		print(json.dumps(result, default = vars, ensure_ascii=False))
+		print(json.dumps(result, default = vars, ensure_ascii=False, sort_keys=True, indent=True))
 	else:
 		print(f'Failed to retrieve the page. Status code: {response.status_code}')
 
