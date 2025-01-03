@@ -134,7 +134,7 @@ def main():
 		schedules = find_schedules(soup, club_id)
 		result["shedule"] = sorted(schedules, key=lambda game: datetime.strptime(game.date, '%d.%m.%Y %H:%M'))
 
-		print(json.dumps(result, default = vars, ensure_ascii=False, sort_keys=True, indent=True))
+		print(json.dumps(result, default = vars, ensure_ascii=False, indent=True))
 	else:
 		print(f'Failed to retrieve the page. Status code: {response.status_code}')
 
