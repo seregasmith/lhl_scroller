@@ -5,6 +5,12 @@ import argparse, re, json, hashlib, requests
 from bs4 import BeautifulSoup
 from json import JSONEncoder
 from datetime import datetime
+from enum import Enum
+
+class Scope(Enum):
+    ALL = "all"
+    SCHEDULE_ONLY = "schedule_only"
+    SCORE_ONLY = "score_only"
 
 class GameRecord(object):
 	"""docstring for GameRecord"""
@@ -106,10 +112,14 @@ def main():
 	args_parser = argparse.ArgumentParser()
 	args_parser.add_argument('--club', type=int, required=True, help='Club id in lhl')
 	args_parser.add_argument('--season', type=int, required=True, help='Number of a season')
+	args_parser.add_argument('--scope', type=Scope, required=False, choices=list(Scope), help='Scope: all, schedule_only, score_only')
 
 	args = args_parser.parse_args()
 	club_id = args.club
 	season_n = args.season
+	scope = args.scope
+	if scope is None:
+		scope = Scope.ALL
 
 	url_link =f'https://lhl-77.ru/clubs/{club_id}'
 
@@ -125,14 +135,16 @@ def main():
 		result = {}
 
 		scores = []
-		for content_id in content_ids:
-			scores.extend(find_scores(soup, content_id, club_id))
-		# print(scores)
-		result["scores"] = sorted(scores, key=lambda game: datetime.strptime(game.date, '%d.%m.%Y %H:%M'))
+		if scope == Scope.ALL or scope == Scope.SCORE_ONLY:
+			for content_id in content_ids:
+				scores.extend(find_scores(soup, content_id, club_id))
+			# print(scores)
+			result["scores"] = sorted(scores, key=lambda game: datetime.strptime(game.date, '%d.%m.%Y %H:%M'))
 
 
-		schedules = find_schedules(soup, club_id)
-		result["shedule"] = sorted(schedules, key=lambda game: datetime.strptime(game.date, '%d.%m.%Y %H:%M'))
+		if scope == Scope.ALL or scope == Scope.SCHEDULE_ONLY:
+			schedules = find_schedules(soup, club_id)
+			result["schedule"] = sorted(schedules, key=lambda game: datetime.strptime(game.date, '%d.%m.%Y %H:%M'))
 
 		print(json.dumps(result, default = vars, ensure_ascii=False, indent=True))
 	else:
